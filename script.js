@@ -6,22 +6,17 @@ let chart;
 const TEMPLATES = {
   PEEL: ["Point", "Evidence", "Explain", "Link"],
   PEEEL: ["Point", "Example", "Evidence", "Explain", "Link"],
-  PETAL: ["Point", "Example", "Technique", "Analysis", "Link"]
+  PETAL: ["Point", "Example", "Technique", "Analysis", "Link"],
+  PEELL: ["Point", "Evidence", "Explain", "Link", "Link"]
 };
 
 let selectedBlock = null;
 
-// ===================== 加载模板 =====================
+// ===================== 切换模板（清空 + 重建）=====================
 function loadTemplate() {
-  const select = document.getElementById("template-select");
-  const selected = select.value;
-  const blocks = TEMPLATES[selected];
-  renderDynamicBlocks(blocks);
-
-  setTimeout(() => {
-    loadSavedData();
-    updateAll();
-  }, 50);
+  const selected = document.getElementById("template-select").value;
+  renderDynamicBlocks(TEMPLATES[selected]);
+  updateAll();
 }
 
 // ===================== 动态渲染区块 =====================
@@ -29,16 +24,26 @@ function renderDynamicBlocks(blockNames) {
   const container = document.getElementById("dynamic-blocks");
   container.innerHTML = "";
 
+  const typeMap = {
+    "Point": "point",
+    "Evidence": "evidence",
+    "Example": "evidence",
+    "Explain": "explain",
+    "Analysis": "explain",
+    "Technique": "explain",
+    "Link": "link"
+  };
+
   blockNames.forEach((name, index) => {
-    addBlockUI(name, index + 1);
+    addBlockUI(name, index + 1, typeMap[name] || "none");
   });
 }
 
-function addBlockUI(name, number) {
+function addBlockUI(name, number, type = null) {
   const container = document.getElementById("dynamic-blocks");
   const id = name.toLowerCase().replace(/\s+/g, "-");
   const html = `
-    <div class="input-group" data-block="${name}" onclick="selectBlock(this)">
+    <div class="input-group" data-block="${name}" data-type="${type}" onclick="selectBlock(this)">
       <label for="${id}" class="input-label">
         ${number}. <span class="block-name">${name}</span>
         <button onclick="renameBlock(this, event)" style="margin-left:8px; font-size:12px; padding:2px 6px;">✏️</button>
@@ -77,19 +82,52 @@ function renameBlock(btn, e) {
   updateAll();
 }
 
-// 添加新区块
+// 在选中区块后方插入新区块
 document.getElementById("add-block").onclick = () => {
-  const all = document.querySelectorAll("#dynamic-blocks .input-group");
   const newName = prompt("Enter new section name:", "New Section");
   if (!newName) return;
-  addBlockUI(newName, all.length + 1);
+
+  const allBlocks = Array.from(document.querySelectorAll("#dynamic-blocks .input-group"));
+  const insertIndex = selectedBlock
+    ? allBlocks.indexOf(selectedBlock) + 1
+    : allBlocks.length;
+
+  const number = insertIndex + 1;
+  const id = newName.toLowerCase().replace(/\s+/g, "-");
+
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = `
+    <div class="input-group" data-block="${newName}" data-type="none" onclick="selectBlock(this)">
+      <label for="${id}" class="input-label">
+        ${number}. <span class="block-name">${newName}</span>
+        <button onclick="renameBlock(this, event)" style="margin-left:8px; font-size:12px; padding:2px 6px;">✏️</button>
+      </label>
+      <textarea id="${id}" placeholder="Write your ${newName} here..." oninput="updateAll()"></textarea>
+      <div class="word-count" id="${id}-count">Word count: 0</div>
+    </div>
+  `;
+  const newEl = tempDiv.firstElementChild;
+
+  const container = document.getElementById("dynamic-blocks");
+  if (insertIndex >= allBlocks.length) {
+    container.appendChild(newEl);
+  } else {
+    container.insertBefore(newEl, allBlocks[insertIndex]);
+  }
+
+  renumberBlocks();
   updateAll();
 };
 
-// 删除选中区块
+// 删除选中区块（核心区块禁止删除）
 document.getElementById("delete-selected").onclick = () => {
   if (!selectedBlock) {
     alert("Please click a section to select it first.");
+    return;
+  }
+  const type = selectedBlock.getAttribute("data-type");
+  if (type && type !== "none") {
+    alert("This is a required scoring section and cannot be deleted.");
     return;
   }
   selectedBlock.remove();
@@ -144,7 +182,7 @@ function updateFullText() {
 function copyFullText() {
   const fullText = document.getElementById("full-text");
   fullText.select();
-  document.execCommand('copy');
+  navigator.clipboard.writeText(fullText.value);
 
   const toast = document.getElementById("copy-toast");
   toast.classList.add("show");
@@ -153,35 +191,64 @@ function copyFullText() {
 
 // ===================== 本地保存 =====================
 function saveToLocal() {
+  const blockElements = document.querySelectorAll("#dynamic-blocks .input-group");
+  const blockList = [];
+
+  blockElements.forEach(el => {
+    blockList.push({
+      name: el.getAttribute("data-block"),
+      type: el.getAttribute("data-type"),
+      text: el.querySelector("textarea").value
+    });
+  });
+
   const data = {
     title: document.getElementById("title")?.value || "",
     template: document.getElementById("template-select").value,
-    blocks: {}
+    blocks: blockList
   };
-
-  document.querySelectorAll("#dynamic-blocks .input-group").forEach(group => {
-    const name = group.getAttribute("data-block");
-    const text = group.querySelector("textarea").value;
-    data.blocks[name] = text;
-  });
 
   localStorage.setItem("peel_data", JSON.stringify(data));
 }
 
 function loadSavedData() {
   const saved = localStorage.getItem("peel_data");
-  if (!saved) return;
-  const data = JSON.parse(saved);
 
-  if (data.title) document.getElementById("title").value = data.title;
-  if (data.blocks) {
-    Object.keys(data.blocks).forEach(name => {
-      const el = document.querySelector(`.input-group[data-block="${name}"] textarea`);
-      if (el) el.value = data.blocks[name] || "";
-    });
+  // 第一次打开：加载默认 PEEL
+  if (!saved) {
+    document.getElementById("template-select").value = "PEEL";
+    renderDynamicBlocks(TEMPLATES.PEEL);
+    updateAll();
+    return;
   }
 
-  updateAll();
+  const data = JSON.parse(saved);
+
+  // 恢复标题
+  if (data.title) document.getElementById("title").value = data.title;
+
+  // 恢复模板
+  if (data.template) {
+    document.getElementById("template-select").value = data.template;
+  }
+
+  // 恢复区块 + 内容 + type
+  if (data.blocks && data.blocks.length > 0) {
+    const container = document.getElementById("dynamic-blocks");
+    container.innerHTML = "";
+
+    data.blocks.forEach((item, index) => {
+      addBlockUI(item.name, index + 1, item.type);
+    });
+
+    setTimeout(() => {
+      data.blocks.forEach(item => {
+        const el = document.querySelector(`.input-group[data-block="${item.name}"][data-type="${item.type}"] textarea`);
+        if (el) el.value = item.text || "";
+      });
+      updateAll();
+    }, 10);
+  }
 }
 
 // ===================== 提交评分 =====================
@@ -190,10 +257,10 @@ async function submitPEEL() {
 
   const data = {
     title: title,
-    point: getBlockText("Point"),
-    evidence: getBlockText("Evidence") || getBlockText("Example"),
-    explain: getBlockText("Explain") || getBlockText("Analysis") || getBlockText("Technique"),
-    link: getBlockText("Link")
+    point: getBlockText("point"),
+    evidence: getBlockText("evidence"),
+    explain: getBlockText("explain"),
+    link: getBlockText("link")
   };
 
   const wordCounts = Array.from(document.querySelectorAll("#dynamic-blocks textarea"))
@@ -202,7 +269,7 @@ async function submitPEEL() {
   updateChart(wordCounts);
 
   try {
-    const response = await fetch('http://localhost:5000/score', {
+    const response = await fetch(API_URL + "/score", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -214,8 +281,8 @@ async function submitPEEL() {
   }
 }
 
-function getBlockText(name) {
-  const el = document.querySelector(`.input-group[data-block="${name}"] textarea`);
+function getBlockText(targetType) {
+  const el = document.querySelector(`.input-group[data-type="${targetType}"] textarea`);
   return el ? el.value.trim() : "";
 }
 
@@ -287,14 +354,7 @@ function loadTheme() {
 
 // ===================== 初始化 =====================
 window.onload = () => {
-  const saved = localStorage.getItem("peel_data");
-  let templateToLoad = "PEEL";
-  if (saved) {
-    const data = JSON.parse(saved);
-    if (data.template) templateToLoad = data.template;
-  }
-  document.getElementById("template-select").value = templateToLoad;
-  loadTemplate();
   loadTheme();
   document.getElementById('theme-toggle').onclick = toggleTheme;
+  loadSavedData();
 };
