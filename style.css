@@ -67,7 +67,6 @@ body {
     font-size: 1.1rem;
 }
 
-/* 主题切换按钮 */
 .theme-toggle {
     position: absolute;
     top: 20px;
@@ -104,6 +103,56 @@ body {
     border: 1px solid var(--border);
 }
 
+/* ========================== 全新分区布局 ========================== */
+.panel-section {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+.panel-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.panel-title {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-row {
+    display: flex;
+    gap: 10px;
+}
+.button-row .btn {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.btn-add {
+    background: var(--primary);
+    color: white;
+}
+.btn-delete {
+    background: #ef4444;
+    color: white;
+}
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* ========================== 基础控件 ========================== */
 .template-select {
     width: 100%;
     padding: 12px 15px;
@@ -117,14 +166,6 @@ body {
 .template-select:focus {
     outline: none;
     border-color: var(--primary);
-}
-
-.panel-title {
-    color: var(--text);
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--primary-light);
 }
 
 .input-group {
@@ -154,14 +195,6 @@ input#title:focus, textarea:focus {
 }
 
 textarea {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    font-size: 16px;
-    background: var(--card);
-    color: var(--text);
-    /* 👇 关键修改：最小更高，自动纵向扩展 */
     min-height: 120px;
     max-height: 400px;
     resize: vertical;
@@ -186,24 +219,17 @@ textarea {
     font-size: 16px;
     font-weight: 600;
     color: var(--primary);
-    margin-bottom: 20px;
+    margin-top: 15px;
 }
 
-.total-word-count i {
-    font-size: 18px;
-}
-
+/* ========================== 复制 & 导出 ========================== */
 .full-text-group {
-    margin-bottom: 25px;
+    margin-top: 20px;
 }
-
 .full-text-container {
     position: relative;
-    display: flex;
 }
-
 #full-text {
-    flex: 1;
     background-color: var(--copy-bg);
     border: 1px solid var(--border);
     color: var(--text);
@@ -211,18 +237,30 @@ textarea {
 
 #copy-btn {
     position: absolute;
-    right: 10px;
-    top: 10px;
-    padding: 8px 15px;
-    background-color: var(--primary);
+    right: 14px;
+    top: 12px;
+    padding: 7px 11px;
+    background: var(--primary);
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
 }
-#copy-btn:hover {
-    background-color: var(--primary-dark);
+#export-btn {
+    position: absolute;
+    right: 74px;
+    top: 12px;
+    padding: 7px 11px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+#copy-btn:hover, #export-btn:hover {
+    opacity: 0.9;
 }
 
 #copy-toast {
@@ -250,17 +288,18 @@ textarea {
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
+    margin-bottom: 10px;
 }
 .submit-btn:hover {
     background-color: var(--primary-dark);
 }
 
+/* ========================== 右侧结果区 ========================== */
 .chart-wrapper {
     display: flex;
     justify-content: center;
     padding: 10px 0 20px;
 }
-
 .score-display, .suggestions {
     border-radius: 10px;
     padding: 20px;
@@ -268,19 +307,16 @@ textarea {
     background-color: var(--card);
     border: 1px solid var(--border);
 }
-
 .card-title {
     color: var(--text);
     font-size: 1.2rem;
     margin-bottom: 15px;
 }
-
 .score-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
-
 .score-item {
     display: flex;
     justify-content: space-between;
@@ -289,34 +325,28 @@ textarea {
     border-radius: 6px;
     background-color: var(--copy-bg);
 }
-
 .score-label {
     color: var(--text-muted);
     font-weight: 500;
 }
-
 .score-value {
     color: var(--text);
     font-weight: 600;
     font-size: 1.1rem;
 }
-
 .total-score {
     grid-column: 1 / -1;
     background-color: var(--primary-light);
     border: 1px solid var(--border);
 }
-
 .total-score .score-label {
     color: var(--primary);
     font-size: 1.1rem;
 }
-
 .total-score .score-value {
     color: var(--primary);
     font-size: 1.3rem;
 }
-
 .suggestions ul {
     margin-left: 20px;
     margin-top: 10px;
@@ -325,13 +355,13 @@ textarea {
     margin-bottom: 8px;
     color: var(--text);
 }
-
 .empty-state {
     color: var(--text-muted);
     text-align: center;
     padding: 15px 0;
 }
 
+/* ========================== 响应式 ========================== */
 @media (max-width: 900px) {
     .main-content {
         flex-direction: column;
@@ -341,28 +371,120 @@ textarea {
     }
 }
 
-/* 自定义区块按钮 */
-.custom-btn {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: var(--primary);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-.custom-btn.delete-btn {
-  background: #ef4444;
-}
-.custom-btn:hover {
-  opacity: 0.9;
+/* ========================== 区块选中高亮 ========================== */
+.input-group.selected {
+    border: 2px solid var(--primary);
+    background: var(--primary-light);
+    border-radius: 8px;
+    padding: 8px;
 }
 
-/* 选中区块高亮 */
-.input-group.selected {
-  border: 2px solid var(--primary);
-  background: var(--primary-light);
-  border-radius: 8px;
-  padding: 8px;
+/* ========================== 历史弹窗 ========================== */
+.history-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #6366f1;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.history-btn:hover {
+    opacity: 0.9;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    display: none;
+}
+.modal-overlay.show {
+    display: flex;
+}
+.modal-box {
+    background: var(--card);
+    color: var(--text);
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    border-radius: 12px;
+    padding: 20px;
+    overflow: auto;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text);
+}
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.history-item {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.history-title {
+    font-weight: 600;
+}
+.history-time {
+    font-size: 12px;
+    color: #888;
+}
+.history-btn-view {
+    padding: 6px 12px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.modal-view-box textarea {
+    width: 100%;
+    height: 300px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    resize: none;
+}
+.load-to-editor-btn {
+    padding: 8px 14px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.modal-close-btn {
+    padding: 8px 14px;
+    background: #666;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
 }
