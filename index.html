@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PEEL Writing Grader</title>
+    <title>Paragraph Writing Grader</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,72 +11,74 @@
 <body>
     <div class="container">
         <header class="page-header">
-            <h1>PEEL Writing Grader</h1>
+            <h1>Paragraph Writing Grader</h1>
             <p>Structure your writing & get instant feedback</p>
-            <!-- 深色模式切换按钮 -->
             <button id="theme-toggle" class="theme-toggle">
                 <i class="fas fa-moon"></i> Switch Mode
             </button>
         </header>
 
         <div class="main-content">
-            <!-- 左侧：正确包裹，无重复，无冲突 -->
             <div class="left-panel">
-                <h2 class="panel-title">Writing Area</h2>
-
-                <!-- 👇 这里重新加入 Essay Title 输入框 -->
-                <div class="input-group">
-                    <label for="title" class="input-label">Essay Title</label>
-                    <input type="text" id="title" placeholder="Enter your essay title...">
+                <!-- ========================== 1. 基础设置区 ========================== -->
+                <div class="panel-section">
+                    <h2 class="panel-title"><i class="fas fa-cog"></i> Basic Settings</h2>
+                    <button id="show-history-btn" class="history-btn"><i class="fas fa-history"></i> History</button>
+                    <div class="input-group">
+                        <label for="title" class="input-label">Essay Title</label>
+                        <input type="text" id="title" placeholder="Enter your essay title...">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Select Template</label>
+                        <select id="template-select" class="template-select" onchange="loadTemplate()">
+                            <option value="PEEL">PEEL (Point + Evidence + Explain + Link)</option>
+                            <option value="PEEEL">PEEEL (Point + Example + Evidence + Explain + Link)</option>
+                            <option value="PETAL">PETAL (Point + Example + Technique + Analysis + Link)</option>
+                            <option value="PEELL">PEELL (Point + Evidence + Explain + Link to question + Link to next paragraph)</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- 模板选择器 -->
-                <div class="input-group">
-                  <label class="input-label">Select Template</label>
-                  <select id="template-select" class="template-select" onchange="loadTemplate()">
-                    <option value="PEEL">PEEL (Point + Evidence + Explain + Link)</option>
-                    <option value="PEEEL">PEEEL (Point + Example + Evidence + Explain + Link)</option>
-                    <option value="PETAL">PETAL (Point + Example + Technique + Analysis + Link)</option>
-                  </select>
+                <!-- ========================== 2. 操作按钮区 ========================== -->
+                <div class="panel-section">
+                    <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Section Controls</h2>
+                    <div class="button-row">
+                        <button id="add-block" class="btn btn-add"><i class="fas fa-plus"></i> Add Section</button>
+                        <button id="delete-selected" class="btn btn-delete"><i class="fas fa-trash"></i> Delete Selected</button>
+                    </div>
                 </div>
 
-                <!-- 👇 把新加的按钮贴在这里 👇 -->
-                <!-- 自定义区块控制 -->
-                <div class="input-group" style="display: flex; gap: 10px;">
-                  <button id="add-block" class="custom-btn">+ Add Section</button>
-                  <button id="delete-selected" class="custom-btn delete-btn">- Delete Selected</button>
+                <!-- ========================== 3. 写作输入区 ========================== -->
+                <div class="panel-section">
+                    <h2 class="panel-title"><i class="fas fa-pen"></i> Writing Area</h2>
+                    <div id="dynamic-blocks"></div>
+                    <div class="total-word-count">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Total Word Count: </span>
+                        <span id="total-count">0</span>
+                    </div>
                 </div>
 
-                <div id="dynamic-blocks"></div>
-
-                <!-- 总字数 -->
-                <div class="total-word-count">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Total Word Count: </span>
-                    <span id="total-count">0</span>
-                </div>
-
-                <!-- 提交按钮放上面 -->
-                <button class="submit-btn" onclick="submitPEEL()">Submit & Get Feedback</button>
-
-                <!-- Full Text 复制框放下面 -->
-                <div class="full-text-group">
-                    <label class="input-label">Full Text (Copyable)</label>
-                    <div class="full-text-container">
-                        <textarea id="full-text" readonly placeholder="Your complete writing will appear here..." rows="4"></textarea>
-                        <button id="copy-btn" onclick="copyFullText()">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                        <span id="copy-toast" class="copy-toast">Copied!</span>
+                <!-- ========================== 4. 提交 & 导出区 ========================== -->
+                <div class="panel-section">
+                    <h2 class="panel-title"><i class="fas fa-paper-plane"></i> Submit & Export</h2>
+                    <button class="submit-btn" onclick="submitAndSaveHistory()"><i class="fas fa-star"></i> Submit & Get Feedback</button>
+                    <div class="full-text-group">
+                        <label class="input-label">Full Text (Copyable)</label>
+                        <div class="full-text-container">
+                            <textarea id="full-text" readonly placeholder="Your complete writing will appear here..." rows="4"></textarea>
+                            <button id="export-btn" onclick="exportToTxt()"><i class="fas fa-file-export"></i> Export TXT</button>
+                            <button id="copy-btn" onclick="copyFullText()"><i class="fas fa-copy"></i> Copy</button>
+                            <span id="copy-toast" class="copy-toast">Copied!</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 右侧结果区（不动） -->
+            <!-- 右侧结果区（不变） -->
             <div class="right-panel">
                 <h2 class="panel-title">Results & Analysis</h2>
                 <div class="chart-wrapper"><canvas id="peelChart"></canvas></div>
-
                 <div class="score-display">
                     <h3 class="card-title">Scoring Results</h3>
                     <div class="score-grid">
@@ -88,7 +90,6 @@
                         <div class="score-item total-score"><span class="score-label">Total</span><span class="score-value" id="score-total">--/100</span></div>
                     </div>
                 </div>
-
                 <div class="suggestions" id="suggestions">
                     <h3 class="card-title">Improvement Suggestions</h3>
                     <p class="empty-state">Complete your writing and submit to get feedback</p>
@@ -96,6 +97,32 @@
             </div>
         </div>
     </div>
+
     <script src="script.js"></script>
+
+    <!-- 历史弹窗（不变） -->
+    <div id="history-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Writing History</h3>
+          <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+        </div>
+        <div id="history-list" class="history-list"></div>
+      </div>
+    </div>
+
+    <div id="view-modal" class="modal-overlay">
+      <div class="modal-box modal-view-box">
+        <div class="modal-header">
+          <h3 id="view-title">Writing Content</h3>
+          <button class="modal-close" onclick="closeViewModal()">✕</button>
+        </div>
+        <textarea id="view-content" readonly></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+          <button onclick="loadToEditor()" class="load-to-editor-btn">Load to Editor</button>
+          <button onclick="closeViewModal()" class="modal-close-btn">Close</button>
+        </div>
+      </div>
+    </div>
 </body>
 </html>
