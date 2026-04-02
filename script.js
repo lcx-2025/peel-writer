@@ -352,6 +352,102 @@ function loadTheme() {
   updateThemeIcon();
 }
 
+// 导出为 TXT 文件
+function exportToTxt() {
+  const title = document.getElementById("title")?.value || "untitled";
+  const content = document.getElementById("full-text").value;
+
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// 打开/关闭历史弹窗
+function openHistoryModal() {
+  document.getElementById("history-modal").classList.add("show");
+  renderHistoryList();
+}
+function closeHistoryModal() {
+  document.getElementById("history-modal").classList.remove("show");
+}
+
+// 打开/关闭查看弹窗
+let currentViewRecord = null;
+function openViewModal(record) {
+  currentViewRecord = record;
+  document.getElementById("view-modal").classList.add("show");
+  document.getElementById("view-title").textContent = record.title || "Untitled";
+  document.getElementById("view-content").value = record.fullText;
+}
+function closeViewModal() {
+  document.getElementById("view-modal").classList.remove("show");
+}
+
+// 渲染历史列表
+function renderHistoryList() {
+  const list = getHistory();
+  const container = document.getElementById("history-list");
+  if (list.length === 0) {
+    container.innerHTML = "<p>No history yet.</p>";
+    return;
+  }
+  container.innerHTML = list.map((rec, i) => `
+    <div class="history-item">
+      <div>
+        <div class="history-title">${rec.title || "Untitled"}</div>
+        <div class="history-time">${rec.createdAt} • Score: ${rec.score || "--"}</div>
+      </div>
+      <button class="history-btn-view" onclick="openViewModal(${JSON.stringify(rec).replace(/"/g, '&quot;')})">View</button>
+    </div>
+  `).join("");
+}
+
+// 本地存储操作
+function getHistory() {
+  return JSON.parse(localStorage.getItem("writing_history") || "[]");
+}
+function addToHistory(record) {
+  const list = getHistory();
+  list.unshift(record); // 最新放最前
+  if (list.length > 30) list.pop(); // 最多30条
+  localStorage.setItem("writing_history", JSON.stringify(list));
+}
+
+// 提交时自动保存历史
+async function submitAndSaveHistory() {
+  await submitPEEL();
+  const title = document.getElementById("title")?.value || "Untitled";
+  const fullText = document.getElementById("full-text").value;
+  const totalScore = document.getElementById("score-total").textContent.split('/')[0];
+  const now = new Date();
+  const timeStr = now.toLocaleString();
+  addToHistory({
+    title,
+    fullText,
+    score: totalScore,
+    createdAt: timeStr,
+    template: document.getElementById("template-select").value
+  });
+}
+
+// 把记录加载回编辑器
+function loadToEditor() {
+  if (!currentViewRecord) return;
+  closeViewModal();
+  closeHistoryModal();
+  alert("Loaded! Please re-select your template if needed.");
+  document.getElementById("title").value = currentViewRecord.title;
+  document.getElementById("full-text").value = currentViewRecord.fullText;
+}
+
+// 绑定按钮
+document.getElementById("show-history-btn").onclick = openHistoryModal;
+
 // ===================== 初始化 =====================
 window.onload = () => {
   loadTheme();
