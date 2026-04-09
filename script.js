@@ -19,7 +19,7 @@ function loadTemplate() {
   updateAll();
 }
 
-// ===================== 动态渲染区块 =====================
+// ===================== 动态渲染区块 + 拖拽排序 =====================
 function renderDynamicBlocks(blockNames) {
   const container = document.getElementById("dynamic-blocks");
   container.innerHTML = "";
@@ -37,13 +37,29 @@ function renderDynamicBlocks(blockNames) {
   blockNames.forEach((name, index) => {
     addBlockUI(name, index + 1, typeMap[name] || "none");
   });
+
+  // 启用拖拽排序
+  new Sortable(container, {
+      animation: 150,
+      handle: ".drag-handle", // 只允许拖手柄，不影响文本选择
+      ghostClass: "sortable-ghost",
+      onEnd: function () {
+        renumberBlocks();
+        updateAll();
+      }
+    });
 }
+
 
 function addBlockUI(name, number, type = null) {
   const container = document.getElementById("dynamic-blocks");
   const id = name.toLowerCase().replace(/\s+/g, "-");
   const html = `
     <div class="input-group" data-block="${name}" data-type="${type}" onclick="selectBlock(this)">
+      <!-- 拖拽手柄 -->
+      <div class="drag-handle" title="Drag to reorder">
+        <i class="fas fa-grip-vertical"></i>
+      </div>
       <label for="${id}" class="input-label">
         ${number}. <span class="block-name">${name}</span>
         <button onclick="renameBlock(this, event)" style="margin-left:8px; font-size:12px; padding:2px 6px;">✏️</button>
@@ -161,7 +177,20 @@ function updateWordCount() {
     const len = el.value.trim().length;
     total += len;
     const cnt = document.getElementById(`${el.id}-count`);
-    if (cnt) cnt.textContent = `Word count: ${len}`;
+    if (cnt) {
+      cnt.textContent = `Word count: ${len}`;
+
+      // 字数颜色提示
+      if (len === 0) {
+        cnt.style.color = "var(--text-muted)";
+      } else if (len <= 15) {
+        cnt.style.color = "#ef4444"; // 红色 - 太少
+      } else if (len <= 40) {
+        cnt.style.color = "#f97316"; // 橙色 - 偏少
+      } else {
+        cnt.style.color = "#10b981"; // 绿色 - 合适
+      }
+    }
   });
 
   document.getElementById("total-count").textContent = total;
@@ -367,6 +396,11 @@ function exportToTxt() {
 }
 
 
+// =========================================================================================
+// 历史记录功能 - 升级版：删除单条 / 清空全部 / 完整加载区块结构
+// =========================================================================================
+let currentViewRecord = null;
+
 // 打开/关闭历史弹窗
 function openHistoryModal() {
   document.getElementById("history-modal").classList.add("show");
@@ -377,7 +411,6 @@ function closeHistoryModal() {
 }
 
 // 打开/关闭查看弹窗
-let currentViewRecord = null;
 function openViewModal(record) {
   currentViewRecord = record;
   document.getElementById("view-modal").classList.add("show");
@@ -388,37 +421,64 @@ function closeViewModal() {
   document.getElementById("view-modal").classList.remove("show");
 }
 
-// 渲染历史列表
+// 渲染历史列表（带删除按钮）
 function renderHistoryList() {
   const list = getHistory();
   const container = document.getElementById("history-list");
   if (list.length === 0) {
-    container.innerHTML = "<p>No history yet.</p>";
+    container.innerHTML = `<p style="text-align:center;">No history yet.</p>
+      <button onclick="clearAllHistory()" class="history-clear-all" style="opacity:0.6;pointer-events:none;">Clear All</p>`;
     return;
   }
-  container.innerHTML = list.map((rec, i) => `
-    <div class="history-item">
-      <div>
-        <div class="history-title">${rec.title || "Untitled"}</div>
-        <div class="history-time">${rec.createdAt} • Score: ${rec.score || "--"}</div>
-      </div>
-      <button class="history-btn-view" onclick="openViewModal(${JSON.stringify(rec).replace(/"/g, '&quot;')})">View</button>
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+      <h3 style="font-size:16px;">History Records</h3>
+      <button class="history-clear-all" onclick="clearAllHistory()">🗑 Clear All</button>
     </div>
-  `).join("");
+    ${list.map((rec, i) => `
+      <div class="history-item">
+        <div>
+          <div class="history-title">${rec.title || "Untitled"}</div>
+          <div class="history-time">${rec.createdAt} • Score: ${rec.score || "--"} • ${rec.template}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="history-btn-view" onclick="openViewModal(${JSON.stringify(rec).replace(/"/g, '&quot;')})">View</button>
+          <button class="history-btn-delete" onclick="deleteHistoryRecord(${i})">Delete</button>
+        </div>
+      </div>
+    `).join("")}`;
 }
 
 // 本地存储操作
 function getHistory() {
   return JSON.parse(localStorage.getItem("writing_history") || "[]");
 }
+
 function addToHistory(record) {
   const list = getHistory();
-  list.unshift(record); // 最新放最前
-  if (list.length > 30) list.pop(); // 最多30条
+  list.unshift(record);
+  if (list.length > 30) list.pop();
   localStorage.setItem("writing_history", JSON.stringify(list));
 }
 
-// 提交时自动保存历史
+// 删除单条记录
+function deleteHistoryRecord(index) {
+  if (!confirm("Delete this record?")) return;
+  const list = getHistory();
+  list.splice(index, 1);
+  localStorage.setItem("writing_history", JSON.stringify(list));
+  renderHistoryList();
+}
+
+// 清空全部记录
+function clearAllHistory() {
+  if (!confirm("Delete ALL history records?")) return;
+  localStorage.removeItem("writing_history");
+  renderHistoryList();
+}
+
+// 提交时自动保存历史（保存完整区块数据）
 async function submitAndSaveHistory() {
   await submitPEEL();
   const title = document.getElementById("title")?.value || "Untitled";
@@ -426,27 +486,77 @@ async function submitAndSaveHistory() {
   const totalScore = document.getElementById("score-total").textContent.split('/')[0];
   const now = new Date();
   const timeStr = now.toLocaleString();
+
+  // 保存完整区块结构
+  const blocks = Array.from(document.querySelectorAll("#dynamic-blocks .input-group")).map(el => ({
+    name: el.getAttribute("data-block"),
+    type: el.getAttribute("data-type"),
+    text: el.querySelector("textarea").value
+  }));
+
   addToHistory({
     title,
     fullText,
     score: totalScore,
     createdAt: timeStr,
-    template: document.getElementById("template-select").value
+    template: document.getElementById("template-select").value,
+    blocks: blocks
   });
 }
 
-// 把记录加载回编辑器
+// 【完美加载】完整恢复所有区块、模板、内容、名称、type
 function loadToEditor() {
   if (!currentViewRecord) return;
+  if (!currentViewRecord.blocks) {
+    alert("This record is too old to load structure.");
+    return;
+  }
+
   closeViewModal();
   closeHistoryModal();
-  alert("Loaded! Please re-select your template if needed.");
-  document.getElementById("title").value = currentViewRecord.title;
-  document.getElementById("full-text").value = currentViewRecord.fullText;
+
+  // 恢复标题
+  document.getElementById("title").value = currentViewRecord.title || "";
+
+  // 恢复模板
+  const template = currentViewRecord.template || "PEEL";
+  document.getElementById("template-select").value = template;
+
+  // 清空并重建所有区块
+  const container = document.getElementById("dynamic-blocks");
+  container.innerHTML = "";
+
+  // 重建区块
+  currentViewRecord.blocks.forEach((item, index) => {
+    addBlockUI(item.name, index + 1, item.type);
+  });
+
+  // 回填内容
+  setTimeout(() => {
+    currentViewRecord.blocks.forEach(item => {
+      const sel = `.input-group[data-block="${item.name}"][data-type="${item.type}"] textarea`;
+      const el = document.querySelector(sel);
+      if (el) el.value = item.text || "";
+    });
+    updateAll();
+  }, 10);
+
+  alert("✅ Loaded successfully!");
 }
 
 // 绑定按钮
 document.getElementById("show-history-btn").onclick = openHistoryModal;
+
+// ===================== 操作规则弹窗 =====================
+function openRulesModal() {
+  document.getElementById("rules-modal").classList.add("show");
+}
+function closeRulesModal() {
+  document.getElementById("rules-modal").classList.remove("show");
+}
+
+// 绑定按钮
+document.getElementById("show-rules-btn").onclick = openRulesModal;
 
 // ===================== 初始化 =====================
 window.onload = () => {
