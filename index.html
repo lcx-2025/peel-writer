@@ -6,6 +6,8 @@
     <title>Paragraph Writing Grader</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 拖拽库 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -24,6 +26,7 @@
                 <div class="panel-section">
                     <h2 class="panel-title"><i class="fas fa-cog"></i> Basic Settings</h2>
                     <button id="show-history-btn" class="history-btn"><i class="fas fa-history"></i> History</button>
+                    <button id="show-rules-btn" class="rules-btn"><i class="fas fa-book"></i> View Rules</button>
                     <div class="input-group">
                         <label for="title" class="input-label">Essay Title</label>
                         <input type="text" id="title" placeholder="Enter your essay title...">
@@ -63,15 +66,6 @@
                 <div class="panel-section">
                     <h2 class="panel-title"><i class="fas fa-paper-plane"></i> Submit & Export</h2>
                     <button class="submit-btn" onclick="submitAndSaveHistory()"><i class="fas fa-star"></i> Submit & Get Feedback</button>
-                    <div class="full-text-group">
-                        <label class="input-label">Full Text (Copyable)</label>
-                        <div class="full-text-container">
-                            <textarea id="full-text" readonly placeholder="Your complete writing will appear here..." rows="4"></textarea>
-                            <button id="export-btn" onclick="exportToTxt()"><i class="fas fa-file-export"></i> Export TXT</button>
-                            <button id="copy-btn" onclick="copyFullText()"><i class="fas fa-copy"></i> Copy</button>
-                            <span id="copy-toast" class="copy-toast">Copied!</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -93,6 +87,19 @@
                 <div class="suggestions" id="suggestions">
                     <h3 class="card-title">Improvement Suggestions</h3>
                     <p class="empty-state">Complete your writing and submit to get feedback</p>
+                </div>
+                <!-- Full Text 导出区 -->
+                <div class="panel-section" style="margin-top:25px;">
+                    <h2 class="panel-title"><i class="fas fa-file-export"></i> Full Text & Export</h2>
+                    <div class="full-text-group">
+                        <label class="input-label">Full Text (Copyable)</label>
+                        <div class="full-text-container">
+                            <textarea id="full-text" readonly placeholder="Your complete writing will appear here..."></textarea>
+                            <button id="export-btn" onclick="exportToTxt()"><i class="fas fa-file-export"></i> Export TXT</button>
+                            <button id="copy-btn" onclick="copyFullText()"><i class="fas fa-copy"></i> Copy</button>
+                            <span id="copy-toast" class="copy-toast">Copied!</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,6 +129,50 @@
           <button onclick="loadToEditor()" class="load-to-editor-btn">Load to Editor</button>
           <button onclick="closeViewModal()" class="modal-close-btn">Close</button>
         </div>
+      </div>
+    </div>
+    <!-- 操作规则弹窗 -->
+    <div id="rules-modal" class="modal-overlay">
+      <div class="modal-box rules-modal-box">
+        <div class="modal-header">
+          <h3>📖 Writing Tool Usage Rules</h3>
+          <button class="modal-close" onclick="closeRulesModal()">✕</button>
+        </div>
+        <div class="rules-content">
+          <h4>✨ Basic Operations</h4>
+          <ul>
+            <li><strong>Select Template</strong>: Choose PEEL/PEEEL/PETAL/PEELL for your writing structure</li>
+            <li><strong>Edit Sections</strong>: Fill in each section (Point/Evidence/Explain/Link) with your content</li>
+            <li><strong>Word Count</strong>: Real-time word count for each section and total</li>
+          </ul>
+
+          <h4>🔧 Section Controls</h4>
+          <ul>
+            <li><strong>Add Section</strong>: Click to insert a new section <em>after the selected block</em></li>
+            <li><strong>Delete Section</strong>: Select a section first, then click to delete (core sections cannot be deleted)</li>
+            <li><strong>Rename Section</strong>: Click the ✏️ icon next to the section name to rename</li>
+            <li><strong>Drag to Reorder</strong>: Hold the ≡ icon on the left to drag and reorder sections</li>
+          </ul>
+
+          <h4>📤 Export & Copy</h4>
+          <ul>
+            <li><strong>Copy Full Text</strong>: One-click copy your complete writing</li>
+            <li><strong>Export TXT</strong>: Download your writing as a .txt file (filename = essay title)</li>
+          </ul>
+
+          <h4>📜 History & Feedback</h4>
+          <ul>
+            <li><strong>Submit & Get Feedback</strong>: Get instant scoring and improvement suggestions</li>
+            <li><strong>Writing History</strong>: View, load, or delete your past writing records</li>
+            <li><strong>Load to Editor</strong>: Restore a past record to continue editing (full structure preserved)</li>
+          </ul>
+
+          <h4>🎨 Theme</h4>
+          <ul>
+            <li><strong>Dark/Light Mode</strong>: Click the top-right button to switch themes (auto-saved)</li>
+          </ul>
+        </div>
+        <button class="rules-close-btn" onclick="closeRulesModal()">Got it!</button>
       </div>
     </div>
 </body>
