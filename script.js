@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:5000";
+// 和后端的链接，后端放在了https://bryanl.pythonanywhere.com
+const API_URL = "https://bryanl.pythonanywhere.com";
 
 let chart;
 
