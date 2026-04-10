@@ -299,18 +299,46 @@ async function submitPEEL() {
   updateChart(wordCounts);
 
   try {
-    const response = await fetch(API_URL + "/score", {
+    // 关键修复：PythonAnywhere 路由是 /，不是 /score
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
     const result = await response.json();
     showResults(result);
+
+    // 自动保存历史
+    saveHistoryAfterSubmit(result);
   } catch (err) {
-    alert("Server error: Make sure backend is running.");
+    console.error(err);
+    alert("Server error. Please check backend.");
   }
 }
 
+// 提交后自动保存历史
+function saveHistoryAfterSubmit(result) {
+  const title = document.getElementById("title")?.value || "Untitled";
+  const fullText = document.getElementById("full-text").value;
+  const totalScore = result.total;
+  const now = new Date();
+  const timeStr = now.toLocaleString();
+
+  const blocks = Array.from(document.querySelectorAll("#dynamic-blocks .input-group")).map(el => ({
+    name: el.getAttribute("data-block"),
+    type: el.getAttribute("data-type"),
+    text: el.querySelector("textarea").value
+  }));
+
+  addToHistory({
+    title,
+    fullText,
+    score: totalScore,
+    createdAt: timeStr,
+    template: document.getElementById("template-select").value,
+    blocks: blocks
+  });
+}
 function getBlockText(targetType) {
   const el = document.querySelector(`.input-group[data-type="${targetType}"] textarea`);
   return el ? el.value.trim() : "";
@@ -477,32 +505,6 @@ function clearAllHistory() {
   if (!confirm("Delete ALL history records?")) return;
   localStorage.removeItem("writing_history");
   renderHistoryList();
-}
-
-// 提交时自动保存历史（保存完整区块数据）
-async function submitAndSaveHistory() {
-  await submitPEEL();
-  const title = document.getElementById("title")?.value || "Untitled";
-  const fullText = document.getElementById("full-text").value;
-  const totalScore = document.getElementById("score-total").textContent.split('/')[0];
-  const now = new Date();
-  const timeStr = now.toLocaleString();
-
-  // 保存完整区块结构
-  const blocks = Array.from(document.querySelectorAll("#dynamic-blocks .input-group")).map(el => ({
-    name: el.getAttribute("data-block"),
-    type: el.getAttribute("data-type"),
-    text: el.querySelector("textarea").value
-  }));
-
-  addToHistory({
-    title,
-    fullText,
-    score: totalScore,
-    createdAt: timeStr,
-    template: document.getElementById("template-select").value,
-    blocks: blocks
-  });
 }
 
 // 【完美加载】完整恢复所有区块、模板、内容、名称、type
