@@ -3,180 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paragraph Writing Grader</title>
+    <title>Paragraph Writing Machine | Instant Feedback</title>
+    <meta name="description"
+          content="Free paragraph writing tool to structure any form of writings, check word count, get instant feedback, and store history records.">
+    <meta name="keywords"
+          content="PEEL writing, paragraph grader, essay helper, writing feedback, PEEL structure, school essay tool">
+    <meta name="author" content="Bryan Li">
+
+    <!-- 社交分享预览 -->
+    <meta property="og:title" content="PEEL & Paragraph Writing Machine">
+    <meta property="og:description"
+          content="Flexibly structure your writing and get instant feedback for PEEL paragraphs.">
+    <meta property="og:type" content="website">
+
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 拖拽库 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js'
+            data-cf-beacon='{"token": "77428bd3d5cc4384ae2458ffb1a24221"}'></script>
+    <!-- End Cloudflare Web Analytics -->
 </head>
 <body>
-    <div class="container">
-        <header class="page-header">
-            <h1>Paragraph Writing Grader</h1>
-            <p>Structure your writing & get instant feedback</p>
-            <button id="theme-toggle" class="theme-toggle">
-                <i class="fas fa-moon"></i> Switch Mode
-            </button>
-        </header>
+<div class="container">
+    <header class="page-header">
+        <h1>Paragraph Writing Grader</h1>
+        <p>Structure your writing & get instant feedback</p>
+        <button id="theme-toggle" class="theme-toggle">
+            <i class="fas fa-moon"></i> Switch Mode
+        </button>
+    </header>
 
-        <div class="main-content">
-            <div class="left-panel">
-                <!-- ========================== 1. 基础设置区 ========================== -->
-                <div class="panel-section">
-                    <h2 class="panel-title"><i class="fas fa-cog"></i> Basic Settings</h2>
-                    <button id="show-history-btn" class="history-btn"><i class="fas fa-history"></i> History</button>
-                    <button id="show-rules-btn" class="rules-btn"><i class="fas fa-book"></i> View Rules</button>
-                    <div class="input-group">
-                        <label for="title" class="input-label">Essay Title</label>
-                        <input type="text" id="title" placeholder="Enter your essay title...">
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Select Template</label>
-                        <select id="template-select" class="template-select" onchange="loadTemplate()">
-                            <option value="PEEL">PEEL (Point + Evidence + Explain + Link)</option>
-                            <option value="PEEEL">PEEEL (Point + Example + Evidence + Explain + Link)</option>
-                            <option value="PETAL">PETAL (Point + Example + Technique + Analysis + Link)</option>
-                            <option value="PEELL">PEELL (Point + Evidence + Explain + Link to question + Link to next paragraph)</option>
-                        </select>
-                    </div>
+    <div class="main-content">
+        <div class="left-panel">
+            <!-- ========================== 1. 基础设置区 ========================== -->
+            <div class="panel-section">
+                <h2 class="panel-title"><i class="fas fa-cog"></i> Basic Settings</h2>
+                <button id="show-history-btn" class="history-btn"><i class="fas fa-history"></i> History</button>
+                <button id="show-rules-btn" class="rules-btn"><i class="fas fa-book"></i> View Rules</button>
+                <div class="input-group">
+                    <label for="title" class="input-label">Essay Title</label>
+                    <input type="text" id="title" placeholder="Enter your essay title...">
                 </div>
-
-                <!-- ========================== 2. 操作按钮区 ========================== -->
-                <div class="panel-section">
-                    <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Section Controls</h2>
-                    <div class="button-row">
-                        <button id="add-block" class="btn btn-add"><i class="fas fa-plus"></i> Add Section</button>
-                        <button id="delete-selected" class="btn btn-delete"><i class="fas fa-trash"></i> Delete Selected</button>
-                    </div>
-                </div>
-
-                <!-- ========================== 3. 写作输入区 ========================== -->
-                <div class="panel-section">
-                    <h2 class="panel-title"><i class="fas fa-pen"></i> Writing Area</h2>
-                    <div id="dynamic-blocks"></div>
-                    <div class="total-word-count">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Total Word Count: </span>
-                        <span id="total-count">0</span>
-                    </div>
-                </div>
-
-                <!-- ========================== 4. 提交 & 导出区 ========================== -->
-                <div class="panel-section">
-                    <h2 class="panel-title"><i class="fas fa-paper-plane"></i> Submit & Export</h2>
-                    <button class="submit-btn" onclick="submitPEEL()"><i class="fas fa-star"></i> Submit & Get Feedback</button>
+                <div class="input-group">
+                    <label class="input-label">Select Template</label>
+                    <select id="template-select" class="template-select" onchange="loadTemplate()">
+                        <option value="PEEL">PEEL (Point + Evidence + Explain + Link)</option>
+                        <option value="PEEEL">PEEEL (Point + Example + Evidence + Explain + Link)</option>
+                        <option value="PETAL">PETAL (Point + Example + Technique + Analysis + Link)</option>
+                        <option value="PEELL">PEELL (Point + Evidence + Explain + Link to question + Link to next
+                            paragraph)
+                        </option>
+                    </select>
                 </div>
             </div>
 
-            <!-- 右侧结果区（不变） -->
-            <div class="right-panel">
-                <h2 class="panel-title">Results & Analysis</h2>
-                <div class="chart-wrapper"><canvas id="peelChart"></canvas></div>
-                <div class="score-display">
-                    <h3 class="card-title">Scoring Results</h3>
-                    <div class="score-grid">
-                        <div class="score-item"><span class="score-label">Point</span><span class="score-value" id="score-point">--/18</span></div>
-                        <div class="score-item"><span class="score-label">Evidence</span><span class="score-value" id="score-evidence">--/22</span></div>
-                        <div class="score-item"><span class="score-label">Explain</span><span class="score-value" id="score-explain">--/22</span></div>
-                        <div class="score-item"><span class="score-label">Link</span><span class="score-value" id="score-link">--/18</span></div>
-                        <div class="score-item"><span class="score-label">Grammar</span><span class="score-value" id="score-grammar">--/20</span></div>
-                        <div class="score-item total-score"><span class="score-label">Total</span><span class="score-value" id="score-total">--/100</span></div>
+            <!-- ========================== 2. 操作按钮区 ========================== -->
+            <div class="panel-section">
+                <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Section Controls</h2>
+                <div class="button-row">
+                    <button id="add-block" class="btn btn-add"><i class="fas fa-plus"></i> Add Section</button>
+                    <button id="delete-selected" class="btn btn-delete"><i class="fas fa-trash"></i> Delete Selected
+                    </button>
+                </div>
+            </div>
+
+            <!-- ========================== 3. 写作输入区 ========================== -->
+            <div class="panel-section">
+                <h2 class="panel-title"><i class="fas fa-pen"></i> Writing Area</h2>
+                <div id="dynamic-blocks"></div>
+                <div class="total-word-count">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Total Word Count: </span>
+                    <span id="total-count">0</span>
+                </div>
+            </div>
+
+            <!-- ========================== 4. 提交 & 导出区 ========================== -->
+            <div class="panel-section">
+                <h2 class="panel-title"><i class="fas fa-paper-plane"></i> Submit & Export</h2>
+                <button class="submit-btn" onclick="submitPEEL()"><i class="fas fa-star"></i> Submit & Get Feedback
+                </button>
+            </div>
+        </div>
+
+        <!-- 右侧结果区（不变） -->
+        <div class="right-panel">
+            <h2 class="panel-title">Results & Analysis</h2>
+            <div class="chart-wrapper">
+                <canvas id="peelChart"></canvas>
+            </div>
+            <div class="score-display">
+                <h3 class="card-title">Scoring Results</h3>
+                <div class="score-grid">
+                    <div class="score-item"><span class="score-label">Point</span><span class="score-value"
+                                                                                        id="score-point">--/18</span>
+                    </div>
+                    <div class="score-item"><span class="score-label">Evidence</span><span class="score-value"
+                                                                                           id="score-evidence">--/22</span>
+                    </div>
+                    <div class="score-item"><span class="score-label">Explain</span><span class="score-value"
+                                                                                          id="score-explain">--/22</span>
+                    </div>
+                    <div class="score-item"><span class="score-label">Link</span><span class="score-value"
+                                                                                       id="score-link">--/18</span>
+                    </div>
+                    <div class="score-item"><span class="score-label">Grammar</span><span class="score-value"
+                                                                                          id="score-grammar">--/20</span>
+                    </div>
+                    <div class="score-item total-score"><span class="score-label">Total</span><span class="score-value"
+                                                                                                    id="score-total">--/100</span>
                     </div>
                 </div>
-                <div class="suggestions" id="suggestions">
-                    <h3 class="card-title">Improvement Suggestions</h3>
-                    <p class="empty-state">Complete your writing and submit to get feedback</p>
-                </div>
-                <!-- Full Text 导出区 -->
-                <div class="panel-section" style="margin-top:25px;">
-                    <h2 class="panel-title"><i class="fas fa-file-export"></i> Full Text & Export</h2>
-                    <div class="full-text-group">
-                        <label class="input-label">Full Text (Copyable)</label>
-                        <div class="full-text-container">
-                            <textarea id="full-text" readonly placeholder="Your complete writing will appear here..."></textarea>
-                            <button id="export-btn" onclick="exportToTxt()"><i class="fas fa-file-export"></i> Export TXT</button>
-                            <button id="copy-btn" onclick="copyFullText()"><i class="fas fa-copy"></i> Copy</button>
-                            <span id="copy-toast" class="copy-toast">Copied!</span>
-                        </div>
+            </div>
+            <div class="suggestions" id="suggestions">
+                <h3 class="card-title">Improvement Suggestions</h3>
+                <p class="empty-state">Complete your writing and submit to get feedback</p>
+            </div>
+            <!-- Full Text 导出区 -->
+            <div class="panel-section" style="margin-top:25px;">
+                <h2 class="panel-title"><i class="fas fa-file-export"></i> Full Text & Export</h2>
+                <div class="full-text-group">
+                    <label class="input-label">Full Text (Copyable)</label>
+                    <div class="full-text-container">
+                        <textarea id="full-text" readonly
+                                  placeholder="Your complete writing will appear here..."></textarea>
+                        <button id="export-btn" onclick="exportToTxt()"><i class="fas fa-file-export"></i> Export TXT
+                        </button>
+                        <button id="copy-btn" onclick="copyFullText()"><i class="fas fa-copy"></i> Copy</button>
+                        <span id="copy-toast" class="copy-toast">Copied!</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 
-    <!-- 历史弹窗（不变） -->
-    <div id="history-modal" class="modal-overlay">
-      <div class="modal-box">
+<!-- 历史弹窗（不变） -->
+<div id="history-modal" class="modal-overlay">
+    <div class="modal-box">
         <div class="modal-header">
-          <h3>Writing History</h3>
-          <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+            <h3>Writing History</h3>
+            <button class="modal-close" onclick="closeHistoryModal()">✕</button>
         </div>
         <div id="history-list" class="history-list"></div>
-      </div>
     </div>
+</div>
 
-    <div id="view-modal" class="modal-overlay">
-      <div class="modal-box modal-view-box">
+<div id="view-modal" class="modal-overlay">
+    <div class="modal-box modal-view-box">
         <div class="modal-header">
-          <h3 id="view-title">Writing Content</h3>
-          <button class="modal-close" onclick="closeViewModal()">✕</button>
+            <h3 id="view-title">Writing Content</h3>
+            <button class="modal-close" onclick="closeViewModal()">✕</button>
         </div>
         <textarea id="view-content" readonly></textarea>
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
-          <button onclick="loadToEditor()" class="load-to-editor-btn">Load to Editor</button>
-          <button onclick="closeViewModal()" class="modal-close-btn">Close</button>
+            <button onclick="loadToEditor()" class="load-to-editor-btn">Load to Editor</button>
+            <button onclick="closeViewModal()" class="modal-close-btn">Close</button>
         </div>
-      </div>
     </div>
-    <!-- 操作规则弹窗 -->
-    <div id="rules-modal" class="modal-overlay">
-      <div class="modal-box rules-modal-box">
+</div>
+<!-- 操作规则弹窗 -->
+<div id="rules-modal" class="modal-overlay">
+    <div class="modal-box rules-modal-box">
         <div class="modal-header">
-          <h3>📖 Writing Tool Usage Rules</h3>
-          <button class="modal-close" onclick="closeRulesModal()">✕</button>
+            <h3>📖 Writing Tool Usage Rules</h3>
+            <button class="modal-close" onclick="closeRulesModal()">✕</button>
         </div>
         <div class="rules-content">
-          <h4>✨ Basic Operations</h4>
-          <ul>
-            <li><strong>Select Template</strong>: Choose PEEL/PEEEL/PETAL/PEELL for your writing structure</li>
-            <li><strong>Edit Sections</strong>: Fill in each section (Point/Evidence/Explain/Link) with your content</li>
-            <li><strong>Word Count</strong>: Real-time word count for each section and total</li>
-          </ul>
+            <h4>✨ Basic Operations</h4>
+            <ul>
+                <li><strong>Select Template</strong>: Choose PEEL/PEEEL/PETAL/PEELL for your writing structure</li>
+                <li><strong>Edit Sections</strong>: Fill in each section (Point/Evidence/Explain/Link) with your content
+                </li>
+                <li><strong>Word Count</strong>: Real-time word count for each section and total</li>
+            </ul>
 
-          <h4>🔧 Section Controls</h4>
-          <ul>
-            <li><strong>Add Section</strong>: Click to insert a new section <em>after the selected block</em></li>
-            <li><strong>Delete Section</strong>: Select a section first, then click to delete (core sections cannot be deleted)</li>
-            <li><strong>Rename Section</strong>: Click the ✏️ icon next to the section name to rename</li>
-            <li><strong>Drag to Reorder</strong>: Hold the ≡ icon on the left to drag and reorder sections</li>
-          </ul>
+            <h4>🔧 Section Controls</h4>
+            <ul>
+                <li><strong>Add Section</strong>: Click to insert a new section <em>after the selected block</em></li>
+                <li><strong>Delete Section</strong>: Select a section first, then click to delete (core sections cannot
+                    be deleted)
+                </li>
+                <li><strong>Rename Section</strong>: Click the ✏️ icon next to the section name to rename</li>
+                <li><strong>Drag to Reorder</strong>: Hold the ≡ icon on the left to drag and reorder sections</li>
+            </ul>
 
-          <h4>📤 Export & Copy</h4>
-          <ul>
-            <li><strong>Copy Full Text</strong>: One-click copy your complete writing</li>
-            <li><strong>Export TXT</strong>: Download your writing as a .txt file (filename = essay title)</li>
-          </ul>
+            <h4>📤 Export & Copy</h4>
+            <ul>
+                <li><strong>Copy Full Text</strong>: One-click copy your complete writing</li>
+                <li><strong>Export TXT</strong>: Download your writing as a .txt file (filename = essay title)</li>
+            </ul>
 
-          <h4>📜 History & Feedback</h4>
-          <ul>
-            <li><strong>Submit & Get Feedback</strong>: Get instant scoring and improvement suggestions</li>
-            <li><strong>Writing History</strong>: View, load, or delete your past writing records</li>
-            <li><strong>Load to Editor</strong>: Restore a past record to continue editing (full structure preserved)</li>
-          </ul>
+            <h4>📜 History & Feedback</h4>
+            <ul>
+                <li><strong>Submit & Get Feedback</strong>: Get instant scoring and improvement suggestions</li>
+                <li><strong>Writing History</strong>: View, load, or delete your past writing records</li>
+                <li><strong>Load to Editor</strong>: Restore a past record to continue editing (full structure
+                    preserved)
+                </li>
+            </ul>
 
-          <h4>🎨 Theme</h4>
-          <ul>
-            <li><strong>Dark/Light Mode</strong>: Click the top-right button to switch themes (auto-saved)</li>
-          </ul>
+            <h4>🎨 Theme</h4>
+            <ul>
+                <li><strong>Dark/Light Mode</strong>: Click the top-right button to switch themes (auto-saved)</li>
+            </ul>
         </div>
         <button class="rules-close-btn" onclick="closeRulesModal()">Got it!</button>
-      </div>
     </div>
-    <footer style="text-align:center; padding:16px; font-size:12px; color:var(--text-muted); margin-top:20px;">
-      © 2026 Bryan. All rights reserved.
-    </footer>
+</div>
+<footer style="text-align:center; padding:16px; font-size:12px; color:var(--text-muted); margin-top:20px;">
+    © 2026 Bryan. All rights reserved.
+</footer>
 </body>
 </html>
