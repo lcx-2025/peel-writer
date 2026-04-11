@@ -175,21 +175,22 @@ function updateWordCount() {
   const textareas = document.querySelectorAll("#dynamic-blocks textarea");
 
   textareas.forEach(el => {
-    const len = el.value.trim().length;
-    total += len;
+    const text = el.value.trim();
+    const wordCount = text ? text.split(/\s+/).length : 0;
+    total += wordCount;
     const cnt = document.getElementById(`${el.id}-count`);
     if (cnt) {
-      cnt.textContent = `Word count: ${len}`;
+      cnt.textContent = `Word count: ${wordCount}`;
 
-      // 字数颜色提示
-      if (len === 0) {
+      // 单词数量颜色提示
+      if (wordCount === 0) {
         cnt.style.color = "var(--text-muted)";
-      } else if (len <= 15) {
-        cnt.style.color = "#ef4444"; // 红色 - 太少
-      } else if (len <= 40) {
-        cnt.style.color = "#f97316"; // 橙色 - 偏少
+      } else if (wordCount <= 5) {
+        cnt.style.color = "#ef4444";
+      } else if (wordCount <= 12) {
+        cnt.style.color = "#f97316";
       } else {
-        cnt.style.color = "#10b981"; // 绿色 - 合适
+        cnt.style.color = "#10b981";
       }
     }
   });
